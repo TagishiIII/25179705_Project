@@ -1,0 +1,522 @@
+---
+# IMPORTANT: Change settings here, but DO NOT change the spacing AT ALL.
+# Remove comments and add values where applicable.
+# The descriptions below should be self-explanatory
+
+title: "Interest Rate Dynamics in South Africa: Evaluating the South African Reserve Bank’s Inflation Targeting Framework "
+#subtitle: "This will appear as Right Header"
+
+documentclass: "elsarticle"
+
+# --------- Thesis title (Optional - set to FALSE by default).
+# You can move the details below around as you please.
+Thesis_FP: TRUE
+Entry1: " Interest Rate Dynamics in South Africa: Evaluating the South African Reserve Bank’s Inflation Targeting Framework "
+Entry2: "\\textbf{Tagishi Mashego}" # textbf for bold
+#Entry3: "A cum laude"
+Uni_Logo: TexLogo.png # Place a logo in the indicated location (from your root, e.g. defaults to ~/Tex/Logo.png) and uncomment this line. Leave uncommented for no image
+Logo_width: 0.3 # If using a logo - use this to set width (size) of image
+# Entry4: "Under the supervision of: \\vfill Prof. Joe Smith and Dr. Frank Smith"
+Entry5: "Data Science For Economics and Finance 871"
+Entry6: June 2025
+# Entry7:
+# Entry8:
+
+# --------- Front Page
+# Comment: ----- Follow this pattern for up to 5 authors
+AddTitle: TRUE # Use FALSE when submitting to peer reviewed platform. This will remove author names.
+# Author1: "Jane Doe"  # First Author - note the thanks message displayed as an italic footnote of first page.
+#Ref1: "Some Institution, Cape Town, South Africa" # First Author's Affiliation
+#Email1: "nfkatzke\\@gmail.com" # First Author's Email address
+
+#Author2: "John Smith"
+#Ref2: "Some other Institution, Cape Town, South Africa"
+#Email2: "John\\@gmail.com"
+#CommonAffiliation_12: TRUE # If Author 1 and 2 have a common affiliation. Works with _13, _23, etc.
+
+#Author3: "John Doe"
+#Email3: "Joe\\@gmail.com"
+
+#CorrespAuthor_1: TRUE  # If corresponding author is author 3, e.g., use CorrespAuthor_3: TRUE
+
+# Comment out below to remove both. JEL Codes only given if keywords also given.
+keywords: "Inflation targeting,\\ Interest Rates" # Use \\sep to separate
+#JELCodes: "L250 \\sep L100"
+
+# ----- Manage headers and footers:
+#BottomLFooter: $Title$
+#BottomCFooter:
+#TopLHeader: \leftmark # Adds section name at topleft. Remove comment to add it.
+BottomRFooter: "\\footnotesize Page \\thepage" # Add a '#' before this line to remove footer.
+addtoprule: TRUE
+addfootrule: TRUE               # Use if footers added. Add '#' to remove line.
+
+# --------- page margins:
+margin: 2.3 # Sides
+bottom: 2 # bottom
+top: 2.5 # Top
+HardSet_layout: TRUE # Hard-set the spacing of words in your document. This will stop LaTeX squashing text to fit on pages, e.g.
+# This is done by hard-setting the spacing dimensions. Set to FALSE if you want LaTeX to optimize this for your paper.
+
+# --------- Line numbers
+linenumbers: FALSE # Used when submitting to journal
+
+# ---------- References settings:
+# You can download cls format here: https://www.zotero.org/ - simply search for your institution. You can also edit and save cls formats here: https://editor.citationstyles.org/about/
+# Hit download, store it in Tex/ folder, and change reference below - easy.
+bibliography: Tex/ref.bib       # Do not edit: Keep this naming convention and location.
+csl: Tex/harvard-stellenbosch-university.csl # referencing format used.
+# By default, the bibliography only displays the cited references. If you want to change this, you can comment out one of the following:
+#nocite: '@*' # Add all items in bibliography, whether cited or not
+# nocite: |  # add specific references that aren't cited
+#  @grinold2000
+#  @Someoneelse2010
+
+# ---------- General:
+RemovePreprintSubmittedTo: False # Removes the 'preprint submitted to...' at bottom of titlepage
+Journal: "Journal of Finance"   # Journal that the paper will be submitting to, if RemovePreprintSubmittedTo is set to TRUE.
+toc: FALSE                       # Add a table of contents
+numbersections: TRUE             # Should sections (and thus figures and tables) be numbered?
+fontsize: 11pt                  # Set fontsize
+linestretch: 1.2                # Set distance between lines.
+link-citations: TRUE            # This creates dynamic links to the papers in reference list.
+
+### Adding additional latex packages:
+# header-includes:
+#    - \usepackage{colortbl} # Add additional packages here.
+
+output:
+  pdf_document:
+    keep_tex: TRUE
+    template: Tex/TexDefault.txt
+    fig_width: 3.5 # Adjust default figure sizes. This can also be done in the chunks of the text.
+    fig_height: 3.5
+abstract: |
+ The stagflation experience of the 1970s and 1980s exposed significant weaknesses in global financial systems, particularly in how monetary economics is used to achieve macroeconomic objectives. The experience played a pivotal role in central banks adopting the inflation-targeting framework as the primary focus of their mandate. Since 2000, the South African Reserve Bank has operated within a 3-6% inflation target band. Recently, the SARB has made clear its intention to move to a 3% point target, based on the view that lower inflation begets stronger economic growth. Using the Global Macro dataset, this paper begins with a brief assessment of the effectiveness of this framework, followed by an empirical analysis of how this framework has influenced the behaviour of short-term and long-term interest over time. The findings aim to give valuable insight as to whether the SARB should proceed with this proposed transition.
+  
+---
+
+<!-- First: Set your default preferences for chunk options: -->
+
+<!-- If you want a chunk's code to be printed, set echo = TRUE. message = FALSE stops R printing ugly package loading details in your final paper too. I also suggest setting warning = FALSE and checking for warnings in R, else you might find ugly warnings in your paper. -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
+# Note: Include = FALSE implies the code is executed, but not printed in your pdf.
+# warning and message = FALSE implies ugly messages and warnings are removed from your pdf.
+# These should be picked up when you execute the command chunks (code sections below) in your rmd, not printed in your paper!
+
+# Lets load in example data, and see how this can be stored and later called from your 'data' folder.
+if(!require("tidyverse")) install.packages("tidyverse")
+library(tidyverse)
+Example_data <- Texevier::Ex_Dat
+
+# Notice that as you are working in a .Rproj file (I am assuming you are) - the relative paths of your directories start at your specified root.
+# This means that when working in a .Rproj file, you never need to use getwd() - it is assumed as your base root automatically.
+write_rds(Example_data, path = "data/Example_data.rds")
+
+```
+
+
+<!-- ############################## -->
+<!-- # Start Writing here: -->
+<!-- ############################## -->
+
+# Introduction \label{Introduction}
+The SARB has been given the constitutional mandate to protect the value of the local currency. To achieve this mandate, it formally adopted the inflation targeting framework in February 2000, with the explicit and overarching aim to keep inflation low and stable. The measure of inflation targeted at the time of adoption was the rate of change of the overall consumer price index, excluding the mortgage interest cost (CPIX) [@ellyne2011]. This target changed to headline CPI inflation in 2009, following the alteration of the measurement of housing costs, which essentially collapsed CPIX and CPI into a single measure [@kahn2008]. 
+
+Under this framework, the SARB aims to keep inflation between 3-6%, with a preference closer to the midpoint of this band. The success of this framework has been subject to much debate. According to @stiglitz2008, inflation targeting is doomed to inevitably fail, at great cost to those countries that maintain it. This paper examines the validity of this statement by conducting an empirical analysis to evaluate the behaviour of short-term and long-term interest rates in South Africa since 2000, which, to a certain extent, serve as indicators of conditions and monetary policy credibility. Finally, this study gives insight into whether the SARB’s pursuit of price stability over this period justifies the transition to a 3% point inflation target. 
+
+
+# Literature Review \label{Literature Review}
+Globally, inflation targeting was first adopted in the 1990s, countries like New Zealand and Canada were among the first to implement this framework following the experience of stagflation,  where a significant portion of central banks accepted higher inflation in the hope that it would boost economic growth, largely relying on the theoretical foundations of the Phillips curve. However, this resulted in high inflation and stagnant growth, exposing the shortcomings of this model, particularly the failure to account for expectations [@ellyne2011]. This would be a turning point in monetary policy. Many countries, South Africa being amongst them,  explored several other ways of conducting monetary policy, such as managing the exchange rates, which proved to be inferior to inflation targeting [@loewald2025]. The late 1990s and early 2000s posted strong growth and more stable inflation rates, with evidence suggesting that countries that targeted inflation enjoyed, on average, 4.8% less inflation over the 1990-2004 period [@IMF2006].
+
+Locally, there has been mixed reviews on the success of this framework, studies show that since 2000, the SARB has missed its inflation target in several years, not only prompting criticism from parties such as COSATU ( Congress of South African Trade Unions ) but raising doubts around how successful the regime has been in managing price stability, relative to the previous regime [@ellyne2011]. Unfortunately, these doubts have economic consequences. If the SARB cannot credibly commit to staying within the band, then that increases the perceived economic risk of lending into the economy, especially given the dire state of our government. While short-term rates are closely tied to the central bank’s policy rate (the repo rate), long-term rates are largely driven by inflation expectations and the corresponding risk premium associated with long-term investments. Both fundamentally depend on the credibility of the SARB’s commitment to its inflation mandate. 
+
+
+The inflation target band in South Africa is set jointly by the SARB and the National Treasury. In the early years following the adoption of this framework the inflation target band oscillated between a range of 3-5% and 3-6%, since November 2003, it has remained constant at 3-6% [@ellyne2011]. However, the empirical evidence suggests that this inflation range is an outlier relative to comparable economies. Among the 149 emerging market and developing economies with available data, South Africa’s inflation rate is ranked 94th as of 2024 [@loewald2025] . In response, the SARB has recently advocated for a transition to an inflation point target of 3%, scheduled for implementation in 2027. The SARB argues that this point target is high enough to avoid reaching the zero lower bound which still allows the SARB reduce the lending rate to stimulate the economy. Further, the target is considered high enough so that price frictions do not carry economic costs when interest rates adjust, which support a more effective monetary policy transmission [@loewald2025]. This paper adds to the literature by showing how interest rates have behaved since the 2000 , providing insight into the credibility of the SARB and give an idea of how economic agents might respond the transition to a lower inflation target. 
+
+
+
+# Data Description\label{Data Description}
+
+This study uses the Global Macro Dataset, an open-source and regularly updated database that compiles macroeconomic data for 243 countries. The dataset integrates data from reputable international organizations, such as the World Bank and the International Monetary Fund. The database covers global macroeconomic trends from the early days of data collection to projected estimates in 2030, with historical data compiled by economic historians to ensure accuracy over time [@muller2025]. 
+
+This study makes use of the inflation-related data for South Africa from 2000-2024, to examine insightful trends over this period. 
+
+
+## Analysis 
+
+```{r Figure1, warning =  FALSE, fig.align = 'center', fig.cap = "Inflation Rates Since 2000 \\label{Figure1}", fig.height = 3, fig.width = 6, dev = 'png'}
+
+library(huxtable)
+library(dplyr)
+library(tidyr)
+library(xtable)
+library(here)
+ 
+Macro  <- read_csv(here("data", "GMD.csv"))
+MzansiMAcro <- Macro %>% filter(countryname == "South Africa")
+
+
+MzansiMAcro %>% filter(year >=2000 & year<=2024) %>% mutate(outside_target = infl < 3 | infl > 6) %>% ggplot(aes(x = year, y = infl)) +
+  geom_line(color = "grey60") +
+  geom_point(aes(color = outside_target), size = 3) +
+  geom_hline(yintercept = 3, linetype = "dashed", color = "blue") +
+  geom_hline(yintercept = 6, linetype = "dashed", color = "blue") +
+  scale_color_manual(values = c("FALSE" = "black", "TRUE" = "red"), guide = "none") +
+  labs(
+    title = "Years with Inflation Outside SARB Target Range (3–6%)",
+    x = "Year",
+    y = "Inflation Rate (%)"
+  ) +
+  theme_minimal()
+
+
+
+```
+
+
+Figure \ref{Figure1} provides support for some of the criticisms directed at the SARB. The SARB was unable to keep inflation  within the inflation target band in 10 of the years since 2000. An outlier occurred in 2008 where the inflation rate reached 10.06%, it is key to note that this is before the Global Financial Crisis that would ensue, thus this performance cannot be attributed to a once in a lifetime event, instead oil price shocks and domestic price increases played a major role [@honohan2022], indicating that monetary policy failed to act aggressively enough to keep inflation stable and within range. 
+
+
+\newpage
+
+While consulting with additional other sources such as [@StatsSA2004] and [@van2004], I have taken the -0.69% inflation rate in 2004 with a grain of salt because it does not fully align with the literature, however, the consensus is that inflation in this period was low and quite possibly lower than the 3% bound, and yet the South African economy saw strong growth, fueling belief that a lower inflation rate is the key to growth. 
+
+The fact that the inflation rate reached 10.6% in 2008 raised significant concerns about the effectiveness of the inflation targeting framework. Was it doomed to fail just as Stiglitz predicted? Since economic agents base their investment decisions on their expectations of the central bank’s ability to achieve their commitment goal, the credibility of the SARB is crucial. The next diagram uncovers how interest rates have behaved following the 2008 peak, with the belief that these interest rates represent agents’ evolving perceptions of the central bank’s credibility. 
+
+
+```{r Figure2, warning =  FALSE, fig.align = 'center',fig.cap = " Behaviour of Market-Related Rates\\label{Figure2}", fig.height = 3, fig.width = 6, dev = 'png'}
+library(huxtable)
+library(dplyr)
+library(tidyr)
+library(xtable)
+library(here)
+
+Macro  <- read_csv(here("data", "GMD.csv"))
+MzansiMAcro <- Macro %>% filter(countryname == "South Africa") 
+
+
+sa_rates_long5 <- MzansiMAcro %>% filter(year >= 2000 & year <= 2024)%>% pivot_longer(cols = c(strate, ltrate, infl),names_to = "rate_type", values_to = "rate")
+
+ ggplot(sa_rates_long5, aes(x = year, y = rate, color = rate_type)) +
+  geom_line(linewidth = 1.2) + scale_y_continuous(limits = c(-5, 25)) + scale_x_continuous(breaks = seq(2000, 2025, by = 5)) +
+  labs(title = "Inflation and Interest Rate Dynamics in South Africa ",
+       x = "Year", y = "Rate (%)",
+       color = "Rate Type") +
+  theme_minimal() 
+
+```
+
+Following the inflation rate peak in 2008 as shown in \ref{Figure2} and \ref{tab8}, long-term interest rates have consistently remained above inflation and short-term interest rates. This suggests investors demand higher returns for holding long-term investments, potentially reflecting concerns about the riskiness of investing in South Africa and doubts about the SARB’s commitment to maintaining price stability. 
+
+The short-term interest rate has reacted ambiguously over this period. This is not surprising because short-term interest rates typically track the central bank rate (repo rate). Unless there is a complete loss of credibility of the central bank, this rate will remain closely linked to the central bank rate, as shown in below.  
+
+
+```{r Figure3, warning =  FALSE, fig.align = 'center', fig.cap = "Behvaiour of Short-Term Rates\\label{Figure3}", fig.height = 3, fig.width = 6, dev = 'png'}
+
+library(huxtable)
+library(dplyr)
+library(tidyr)
+library(xtable)
+library(here)
+
+
+Macro  <- read_csv(here("data", "GMD.csv"))
+MzansiMAcro <- Macro %>% filter(countryname == "South Africa") 
+
+
+sa_rates_long <- MzansiMAcro %>% filter(year >=2000 & year<=2024) %>% pivot_longer(cols = c(cbrate, strate , infl),names_to = "rate_type", values_to = "rate")
+
+ggplot(sa_rates_long, aes(x = year, y = rate, color = rate_type)) +
+  geom_line(linewidth = 1.2) + scale_y_continuous(limits = c(-5, 25)) +
+  labs(title = "South Africa: Short-Term Rates and Inflation ",
+       x = "Year", y = "Interest Rate (%)",
+       color = "Rate Type") +
+  theme_minimal() 
+
+
+```
+
+Figure \ref{Figure3} introduces the central bank rate to this paper, commonly known as the repo rate in South Africa, which is the rate at which the central bank lends to commercial banks. This is the primary tool used by the SARB to influence short-term interest rates and inflation. The repo rate is forward-looking, meaning that it is set based on the central bank’s expectation of future inflation. For instance, should the SARB expect inflation to rise in the next year, it may raise the repo rate now,  even if current inflation is still within the target. The figure shows that it is common practice for the central bank to set the repo rate above inflation to maintain price stability. However, during the 2021-2022 period, inflation exceeded the repo rate, see \ref{tab9}. This deviation from normality can be largely attributed to the COVID-19 pandemic, where economic activity had been limited since 2020, and the SARB kept the repo rate relatively fixed over this period to help the economy recover.  
+
+
+# Statistical modelling\label{Statistical modelling}
+
+
+To add rigour to the findings in Section \ref{Data Description} and to capture the movements that may be lost in visual illustrations, this section explores key econometric techniques to reinforce and validate the findings.  
+
+
+```{r tucker, results = 'asis'}
+
+library(here)
+library(huxtable)
+library(dplyr)
+library(tidyr)
+library(xtable)
+
+
+df <- MzansiMAcro %>%
+  filter(year >= 2008 & year <= 2024) %>%
+  arrange(year) %>%
+  mutate(infl_lag1 = lag(infl, 1))
+
+model <- lm(infl ~ infl_lag1, data = df)
+fyf<- summary(model)
+
+hibo<-xtable(fyf , caption = "Inflation Persistence in South Africa (2008-2024) \\label{tab4}" )
+
+
+print.xtable(hibo, 
+            
+             floating = TRUE,
+             table.placement = 'H',
+             
+             comment = FALSE,
+             caption.placement = 'bottom'
+             )
+
+
+
+```
+
+
+An Autoregressive (AR(1)) inflation model was used to see if the inflation spike in 2008  had lasting effects on subsequent inflation. The estimated coefficient of 0.259 as seen in \ref{tab4} for the lag inflation term is statistically insignificant, illustrating there is no inflation persistence in South Africa and that the shock of 2008 was short-lived. Importantly, a lack of inflation persistence may reflect anchored inflation expectations and a trust that the SARB will respond swiftly to inflationary pressures, implying a degree of credibility in its commitment.
+
+Furthermore, other econometric techniques such as Vector Autoregressive Modelling (VAR) are powerful tools to analyse the dynamic relationships between multiple variables over time. 
+In essence, a VAR estimates how a shock in one variable affects itself and other variables overtime , observing this would add further robustness to findings by tracking how shocks in inflation, long-term, and short-term interest rates affect each other over time. The findings are shown in \ref{tab34} and \ref{tab7}. 
+
+```{r , include=FALSE}
+
+library(tseries)
+library(tidyverse)
+library(lubridate)
+library(huxtable)
+library(dplyr)
+library(tidyr)
+library(xtable)
+library(vars)
+library(urca)
+library(here)
+
+
+clean_df <- MzansiMAcro %>%
+  filter(year >= 2000 & year <= 2024) %>%
+  dplyr ::select(infl, short_rate = strate, long_rate = ltrate) %>%
+  na.omit()
+
+ts_data <- ts(clean_df, start = 2000, frequency = 1)
+
+adf.test(ts_data[, "infl"])        
+adf.test(ts_data[, "short_rate"])  
+adf.test(ts_data[, "long_rate"])   
+
+
+cajo_test <- ca.jo(ts_data, 
+                   type = "trace",     
+                   ecdet = "const",    
+                   K = 2)              
+
+summary(cajo_test)
+
+
+diff_data <- diff(ts_data)  
+library(vars)
+var_model_diff <- VAR(diff_data, p = 2, type = "const")
+summary(var_model_diff)
+
+
+
+```
+
+
+```{r ker, results = 'asis'}
+
+library(tidyverse)
+library(lubridate)
+library(huxtable)
+library(dplyr)
+library(tidyr)
+library(xtable)
+library(vars)
+library(here)
+
+
+clean_df <- MzansiMAcro %>%
+  filter(year >= 2000 & year <= 2024) %>%
+  dplyr ::select(infl, short_rate = strate, long_rate = ltrate) %>%
+  na.omit()
+
+ts_data <- ts(clean_df, start = 2000, frequency = 1)
+
+var_model <- VAR(ts_data, p = 2, type = "const")
+
+short_rate_output <- summary(var_model_diff$varresult$short_rate)$coefficients
+short_rate_table <- xtable(short_rate_output, 
+                           caption = "VAR Equation for Short-Term Interest Rate \\label{tab34}")
+print(short_rate_table, 
+      include.rownames = TRUE, 
+      caption.placement = "bottom",  comment = FALSE)
+
+```
+
+
+
+```{r fan , results = 'asis'}
+
+library(tidyverse)
+library(lubridate)
+library(huxtable)
+library(dplyr)
+library(tidyr)
+library(xtable)
+library(vars)
+library(here)
+
+
+clean_df <- MzansiMAcro %>%
+  filter(year >= 2000 & year <= 2024) %>%
+  dplyr ::select(infl, short_rate = strate, long_rate = ltrate) %>%
+  na.omit()
+
+ts_data <- ts(clean_df, start = 2000, frequency = 1)
+
+
+
+var_model <- VAR(ts_data, p = 2, type = "const")
+
+
+
+long_rate_output <- summary(var_model_diff$varresult$long_rate)$coefficients
+long_rate_table <- xtable(long_rate_output, 
+                          caption = "VAR Equation for Long-Term Interest Rate \\label{tab7}")
+print(long_rate_table, 
+      include.rownames = TRUE,
+      caption.placement = "bottom",
+      comment= FALSE) 
+
+
+```
+
+
+For the sake of academic integrity, it is important to openly state that the results in tables \ref{tab34} and \ref{tab7} should not be taken in isolation. Upon examining the data, there is evidence of non-stationarity in the short-term and long-term interest rates, which is a common challenge in macroeconomic time series. However, the inflation series is found to be stationary, which lends credibility to the findings reported in \ref{tab4}, particularly, when interpreted alongside the broader literature. Based on this, it is reasonable to infer that short-term and long-term interest rates exhibit the same behaviour, where shocks are relatively short-lived. This provides further evidence showing that inflation expectations are well-anchored, even though there have been periods where inflation exceeded the target band, economic agents perceive the SARB’s inflation target as both a credible and consistent commitment. This illustrates that any outliers in interest rate behaviour stem from factors outside the direct control of the monetary policy authority. 
+  
+ 
+
+# Conclusion
+
+
+This paper assesses the credibility of the SARB under the inflation-targeting regime to evaluate whether a transition to a lower inflation target is both justified and likely to be perceived as credible by economic agents. By analysing the behaviour of short-term and long-term interest rates, the findings show that even though the SARB has not always kept inflation within the target range, it has maintained the trust the markets and economic agents. Further, it is important to note that while there have been deviations in the behaviour of interest rates, the findings show that these fluctuations are a result of shocks exogenous to the SARB rather than policy inconsistency.
+
+Governor Lesetja Kganyago , has on multiple occasions  made the remark that a highly inflationary economy is one that is “ anti-poor”. A lower inflation has the potential to increase productive investment , as a result of lost economic uncertainty. The spillover of this  creates an environment that is conducive for economic growth and job creation. This paper provides valuable insight into how the interest rate dynamics reflect institutional credibility of the SARB ,the findings in this paper therefore support the argument that a transition to a 3% point target is feasible and is also likely to yield desirable outcomes for the South African economy. 
+
+
+
+
+
+
+
+\newpage
+
+# References {-}
+
+<div id="refs"></div>
+
+\newpage
+
+# Appendix {-}
+
+
+
+```{r cAPe, results = 'asis'}
+ 
+library(xtable)
+
+var_table <- data.frame(
+  Variable = c("infl", "strate", "ltrate", "cbrate"),
+  Description = c("Inflation rate (%)",
+                  "Short-term interest rate (%)",
+                  "Long-term interest rate (%)",
+                  "Central bank rate (repo rate, %)")
+)
+
+vva <- xtable(var_table, caption = "Variable Descriptions\\label{tab21}")
+
+
+  print.xtable(vva,
+             # tabular.environment = "longtable",
+             floating = TRUE,
+             table.placement = 'H',
+             # scalebox = 0.3,
+             comment = FALSE,
+             caption.placement = 'bottom',
+             include.rownames = FALSE
+             )
+
+
+
+```
+
+
+
+```{r CPe, results = 'asis'}
+
+library(huxtable)
+library(dplyr)
+library(tidyr)
+library(xtable)
+library(here)
+
+Macro  <- read_csv(here("data", "GMD.csv"))
+MzansiMAcro <- Macro %>% filter(countryname == "South Africa") 
+   
+ infa <- MzansiMAcro  %>% mutate(year = as.integer(year)) %>%  filter(year >= 2000 & year <= 2024) %>% dplyr::select(Year = year, `Inflation Rate (%)` = infl) 
+
+
+  thea<-xtable(infa , caption = "Annual Inflation Rate in South Africa (2000–2024) \\label{tab8}" )
+  
+  print.xtable(thea,
+             # tabular.environment = "longtable",
+             floating = TRUE,
+             table.placement = 'H',
+             # scalebox = 0.3,
+             comment = FALSE,
+             caption.placement = 'bottom',
+             include.rownames = FALSE
+             )
+  
+```
+
+```{r APW, results = 'asis'}
+ 
+
+library(huxtable)
+library(dplyr)
+library(tidyr)
+library(xtable)
+library(here)
+
+Macro  <- read_csv(here("data", "GMD.csv"))
+MzansiMAcro <- Macro %>% filter(countryname == "South Africa") 
+
+  # Filter for years 2010 to 2024
+bahn_table <- MzansiMAcro %>%mutate(year = as.integer(year)) %>% 
+  filter(year >= 2010 & year <= 2024) %>%
+  dplyr::select(Year = year, `Inflation Rate (%)` = infl , `Repo Rate (%)` = cbrate)
+
+
+
+haibo<-xtable(bahn_table , caption = "Annual Inflation and Repo Rate in South Africa (2010–2024) \\label{tab9}" )
+
+
+print.xtable(haibo, 
+             # tabular.environment = "longtable",
+             floating = TRUE,
+             table.placement = 'H',
+             # scalebox = 0.3,
+             comment = FALSE,
+             caption.placement = 'bottom',
+             include.rownames = FALSE)
+```
+

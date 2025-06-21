@@ -1,0 +1,753 @@
+\documentclass[11pt,preprint]{elsarticle}
+
+\usepackage{lmodern}
+%%%% My spacing
+\usepackage{setspace}
+\setstretch{1.2}
+\DeclareMathSizes{12}{14}{10}{10}
+
+% Wrap around which gives all figures included the [H] command, or places it "here". This can be tedious to code in Rmarkdown.
+\usepackage{float}
+\let\origfigure\figure
+\let\endorigfigure\endfigure
+\renewenvironment{figure}[1][2] {
+    \expandafter\origfigure\expandafter[H]
+} {
+    \endorigfigure
+}
+
+\let\origtable\table
+\let\endorigtable\endtable
+\renewenvironment{table}[1][2] {
+    \expandafter\origtable\expandafter[H]
+} {
+    \endorigtable
+}
+
+
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+    \usepackage{xltxtra,xunicode}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}
+  \newcommand{\euro}{€}
+\fi
+
+\usepackage{amssymb, amsmath, amsthm, amsfonts}
+
+\def\bibsection{\section*{References}} %%% Make "References" appear before bibliography
+
+
+\usepackage[numbers]{natbib}
+
+\usepackage{longtable}
+\usepackage[margin=2.3cm,bottom=2cm,top=2.5cm, includefoot]{geometry}
+\usepackage{fancyhdr}
+\usepackage[bottom, hang, flushmargin]{footmisc}
+\usepackage{graphicx}
+\numberwithin{equation}{section}
+\numberwithin{figure}{section}
+\numberwithin{table}{section}
+\setlength{\parindent}{0cm}
+\setlength{\parskip}{1.3ex plus 0.5ex minus 0.3ex}
+\usepackage{textcomp}
+\renewcommand{\headrulewidth}{0.2pt}
+\renewcommand{\footrulewidth}{0.3pt}
+
+\usepackage{array}
+\newcolumntype{x}[1]{>{\centering\arraybackslash\hspace{0pt}}p{#1}}
+
+%%%%  Remove the "preprint submitted to" part. Don't worry about this either, it just looks better without it:
+\journal{Journal of Finance}
+
+ \def\tightlist{} % This allows for subbullets!
+
+\usepackage{hyperref}
+\hypersetup{breaklinks=true,
+            bookmarks=true,
+            colorlinks=true,
+            citecolor=blue,
+            urlcolor=blue,
+            linkcolor=blue,
+            pdfborder={0 0 0}}
+
+
+% The following packages allow huxtable to work:
+\usepackage{siunitx}
+\usepackage{multirow}
+\usepackage{hhline}
+\usepackage{calc}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{caption}
+
+
+\newenvironment{columns}[1][]{}{}
+
+\newenvironment{column}[1]{\begin{minipage}{#1}\ignorespaces}{%
+\end{minipage}
+\ifhmode\unskip\fi
+\aftergroup\useignorespacesandallpars}
+
+\def\useignorespacesandallpars#1\ignorespaces\fi{%
+#1\fi\ignorespacesandallpars}
+
+\makeatletter
+\def\ignorespacesandallpars{%
+  \@ifnextchar\par
+    {\expandafter\ignorespacesandallpars\@gobble}%
+    {}%
+}
+\makeatother
+
+
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+\href{\#cite.\detokenize{#1}}{#2}\nocite{#1}}
+
+\makeatletter
+% allow citations to break across lines
+\let\@cite@ofmt\@firstofone
+% avoid brackets around text for \cite:
+\def\@biblabel#1{}
+\def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+{\begin{list}{}{%
+	\setlength{\itemindent}{0pt}
+	\setlength{\leftmargin}{0pt}
+	\setlength{\parsep}{0pt}
+	% turn on hanging indent if param 1 is 1
+	\ifodd #1
+	\setlength{\leftmargin}{\cslhangindent}
+	\setlength{\itemindent}{-1\cslhangindent}
+	\fi
+	% set entry spacing
+	\setlength{\itemsep}{#2\baselineskip}}}
+{\end{list}}
+
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
+
+\urlstyle{same}  % don't use monospace font for urls
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\setcounter{secnumdepth}{5}
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+
+%%% Include extra packages specified by user
+
+%%% Hard setting column skips for reports - this ensures greater consistency and control over the length settings in the document.
+%% page layout
+%% paragraphs
+\setlength{\baselineskip}{12pt plus 0pt minus 0pt}
+\setlength{\parskip}{12pt plus 0pt minus 0pt}
+\setlength{\parindent}{0pt plus 0pt minus 0pt}
+%% floats
+\setlength{\floatsep}{12pt plus 0 pt minus 0pt}
+\setlength{\textfloatsep}{20pt plus 0pt minus 0pt}
+\setlength{\intextsep}{14pt plus 0pt minus 0pt}
+\setlength{\dbltextfloatsep}{20pt plus 0pt minus 0pt}
+\setlength{\dblfloatsep}{14pt plus 0pt minus 0pt}
+%% maths
+\setlength{\abovedisplayskip}{12pt plus 0pt minus 0pt}
+\setlength{\belowdisplayskip}{12pt plus 0pt minus 0pt}
+%% lists
+\setlength{\topsep}{10pt plus 0pt minus 0pt}
+\setlength{\partopsep}{3pt plus 0pt minus 0pt}
+\setlength{\itemsep}{5pt plus 0pt minus 0pt}
+\setlength{\labelsep}{8mm plus 0mm minus 0mm}
+\setlength{\parsep}{\the\parskip}
+\setlength{\listparindent}{\the\parindent}
+%% verbatim
+\setlength{\fboxsep}{5pt plus 0pt minus 0pt}
+
+
+
+\begin{document}
+
+
+
+%titlepage
+\thispagestyle{empty}
+\begin{center}
+\begin{minipage}{0.75\linewidth}
+    \centering
+%Entry1
+    {\uppercase{\huge Interest Rate Dynamics in South Africa: Evaluating
+the South African Reserve Bank's Inflation Targeting Framework\par}}
+    \vspace{2cm}
+%Author's name
+    {\LARGE \textbf{Tagishi Mashego}\par}
+    \vspace{1cm}
+%University logo
+\begin{center}
+    \includegraphics[width=0.3\linewidth]{TexLogo.png}
+\end{center}
+\vspace{1cm}
+%Supervisor's Details
+\begin{center}
+    {\Large \par}
+    \vspace{1cm}
+%Degree
+    {\large \par}
+    \vspace{1cm}
+%Institution
+    {\large Data Science For Economics and Finance 871\par}
+    \vspace{1cm}
+%Date
+    {\large June 2025}
+%More
+    {\normalsize }
+%More
+    {\normalsize }
+\end{center}
+\end{minipage}
+\end{center}
+\clearpage
+
+
+\begin{frontmatter}  %
+
+\title{Interest Rate Dynamics in South Africa: Evaluating the South
+African Reserve Bank's Inflation Targeting Framework}
+
+% Set to FALSE if wanting to remove title (for submission)
+
+
+
+
+
+
+
+
+
+
+
+\begin{abstract}
+\small{
+The stagflation experience of the 1970s and 1980s exposed significant
+weaknesses in global financial systems, particularly in how monetary
+economics is used to achieve macroeconomic objectives. The experience
+played a pivotal role in central banks adopting the inflation-targeting
+framework as the primary focus of their mandate. Since 2000, the South
+African Reserve Bank has operated within a 3-6\% inflation target band.
+Recently, the SARB has made clear its intention to move to a 3\% point
+target, based on the view that lower inflation begets stronger economic
+growth. Using the Global Macro dataset, this paper begins with a brief
+assessment of the effectiveness of this framework, followed by an
+empirical analysis of how this framework has influenced the behaviour of
+short-term and long-term interest over time. The findings aim to give
+valuable insight as to whether the SARB should proceed with this
+proposed transition.
+}
+\end{abstract}
+
+\vspace{1cm}
+
+
+\begin{keyword}
+\footnotesize{
+Inflation targeting,~Interest Rates \\
+\vspace{0.3cm}
+}
+\end{keyword}
+
+
+
+\vspace{0.5cm}
+
+\end{frontmatter}
+
+\setcounter{footnote}{0}
+
+
+
+%________________________
+% Header and Footers
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagestyle{fancy}
+\chead{}
+\rhead{}
+\lfoot{}
+\rfoot{\footnotesize Page \thepage}
+\lhead{}
+%\rfoot{\footnotesize Page \thepage } % "e.g. Page 2"
+\cfoot{}
+
+%\setlength\headheight{30pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%________________________
+
+\headsep 35pt % So that header does not go over title
+
+
+
+
+\section{\texorpdfstring{Introduction
+\label{Introduction}}{Introduction }}\label{introduction}
+
+The SARB has been given the constitutional mandate to protect the value
+of the local currency. To achieve this mandate, it formally adopted the
+inflation targeting framework in February 2000, with the explicit and
+overarching aim to keep inflation low and stable. The measure of
+inflation targeted at the time of adoption was the rate of change of the
+overall consumer price index, excluding the mortgage interest cost
+(CPIX) (\citeproc{ref-ellyne2011}{Ellyne \& Veller, 2011}). This target
+changed to headline CPI inflation in 2009, following the alteration of
+the measurement of housing costs, which essentially collapsed CPIX and
+CPI into a single measure (\citeproc{ref-kahn2008}{Kahn, 2008}).
+
+Under this framework, the SARB aims to keep inflation between 3-6\%,
+with a preference closer to the midpoint of this band. The success of
+this framework has been subject to much debate. According to Stiglitz
+(\citeproc{ref-stiglitz2008}{2008}), inflation targeting is doomed to
+inevitably fail, at great cost to those countries that maintain it. This
+paper examines the validity of this statement by conducting an empirical
+analysis to evaluate the behaviour of short-term and long-term interest
+rates in South Africa since 2000, which, to a certain extent, serve as
+indicators of conditions and monetary policy credibility. Finally, this
+study gives insight into whether the SARB's pursuit of price stability
+over this period justifies the transition to a 3\% point inflation
+target.
+
+\section{\texorpdfstring{Literature Review
+\label{Literature Review}}{Literature Review }}\label{literature-review}
+
+Globally, inflation targeting was first adopted in the 1990s, countries
+like New Zealand and Canada were among the first to implement this
+framework following the experience of stagflation, where a significant
+portion of central banks accepted higher inflation in the hope that it
+would boost economic growth, largely relying on the theoretical
+foundations of the Phillips curve. However, this resulted in high
+inflation and stagnant growth, exposing the shortcomings of this model,
+particularly the failure to account for expectations
+(\citeproc{ref-ellyne2011}{Ellyne \& Veller, 2011}). This would be a
+turning point in monetary policy. Many countries, South Africa being
+amongst them, explored several other ways of conducting monetary policy,
+such as managing the exchange rates, which proved to be inferior to
+inflation targeting (\citeproc{ref-loewald2025}{Loewald, Steinbach \&
+Rakgalakane, 2025}). The late 1990s and early 2000s posted strong growth
+and more stable inflation rates, with evidence suggesting that countries
+that targeted inflation enjoyed, on average, 4.8\% less inflation over
+the 1990-2004 period (\citeproc{ref-IMF2006}{International Monetary
+Fund, 2006}).
+
+Locally, there has been mixed reviews on the success of this framework,
+studies show that since 2000, the SARB has missed its inflation target
+in several years, not only prompting criticism from parties such as
+COSATU ( Congress of South African Trade Unions ) but raising doubts
+around how successful the regime has been in managing price stability,
+relative to the previous regime (\citeproc{ref-ellyne2011}{Ellyne \&
+Veller, 2011}). Unfortunately, these doubts have economic consequences.
+If the SARB cannot credibly commit to staying within the band, then that
+increases the perceived economic risk of lending into the economy,
+especially given the dire state of our government. While short-term
+rates are closely tied to the central bank's policy rate (the repo
+rate), long-term rates are largely driven by inflation expectations and
+the corresponding risk premium associated with long-term investments.
+Both fundamentally depend on the credibility of the SARB's commitment to
+its inflation mandate.
+
+The inflation target band in South Africa is set jointly by the SARB and
+the National Treasury. In the early years following the adoption of this
+framework the inflation target band oscillated between a range of 3-5\%
+and 3-6\%, since November 2003, it has remained constant at 3-6\%
+(\citeproc{ref-ellyne2011}{Ellyne \& Veller, 2011}). However, the
+empirical evidence suggests that this inflation range is an outlier
+relative to comparable economies. Among the 149 emerging market and
+developing economies with available data, South Africa's inflation rate
+is ranked 94th as of 2024 (\citeproc{ref-loewald2025}{Loewald \emph{et
+al.}, 2025}) . In response, the SARB has recently advocated for a
+transition to an inflation point target of 3\%, scheduled for
+implementation in 2027. The SARB argues that this point target is high
+enough to avoid reaching the zero lower bound which still allows the
+SARB reduce the lending rate to stimulate the economy. Further, the
+target is considered high enough so that price frictions do not carry
+economic costs when interest rates adjust, which support a more
+effective monetary policy transmission
+(\citeproc{ref-loewald2025}{Loewald \emph{et al.}, 2025}). This paper
+adds to the literature by showing how interest rates have behaved since
+the 2000 , providing insight into the credibility of the SARB and give
+an idea of how economic agents might respond the transition to a lower
+inflation target.
+
+\section{\texorpdfstring{Data
+Description\label{Data Description}}{Data Description}}\label{data-description}
+
+This study uses the Global Macro Dataset, an open-source and regularly
+updated database that compiles macroeconomic data for 243 countries. The
+dataset integrates data from reputable international organizations, such
+as the World Bank and the International Monetary Fund. The database
+covers global macroeconomic trends from the early days of data
+collection to projected estimates in 2030, with historical data compiled
+by economic historians to ensure accuracy over time
+(\citeproc{ref-muller2025}{Müller, Xu, Lehbib \& Chen, 2025}).
+
+This study makes use of the inflation-related data for South Africa from
+2000-2024, to examine insightful trends over this period.
+
+\subsection{Analysis}\label{analysis}
+
+\begin{figure}[H]
+
+{\centering \includegraphics{DatSci-Project-_files/figure-latex/Figure1-1} 
+
+}
+
+\caption{Inflation Rates Since 2000 \label{Figure1}}\label{fig:Figure1}
+\end{figure}
+
+Figure \ref{Figure1} provides support for some of the criticisms
+directed at the SARB. The SARB was unable to keep inflation within the
+inflation target band in 10 of the years since 2000. An outlier occurred
+in 2008 where the inflation rate reached 10.06\%, it is key to note that
+this is before the Global Financial Crisis that would ensue, thus this
+performance cannot be attributed to a once in a lifetime event, instead
+oil price shocks and domestic price increases played a major role
+(\citeproc{ref-honohan2022}{Honohan \& Orphanides, 2022}), indicating
+that monetary policy failed to act aggressively enough to keep inflation
+stable and within range.
+
+\newpage
+
+While consulting with additional other sources such as
+(\citeproc{ref-StatsSA2004}{Statistics South Africa, 2004}) and
+(\citeproc{ref-van2004}{Van der Merwe, 2004}), I have taken the -0.69\%
+inflation rate in 2004 with a grain of salt because it does not fully
+align with the literature, however, the consensus is that inflation in
+this period was low and quite possibly lower than the 3\% bound, and yet
+the South African economy saw strong growth, fueling belief that a lower
+inflation rate is the key to growth.
+
+The fact that the inflation rate reached 10.6\% in 2008 raised
+significant concerns about the effectiveness of the inflation targeting
+framework. Was it doomed to fail just as Stiglitz predicted? Since
+economic agents base their investment decisions on their expectations of
+the central bank's ability to achieve their commitment goal, the
+credibility of the SARB is crucial. The next diagram uncovers how
+interest rates have behaved following the 2008 peak, with the belief
+that these interest rates represent agents' evolving perceptions of the
+central bank's credibility.
+
+\begin{figure}[H]
+
+{\centering \includegraphics{DatSci-Project-_files/figure-latex/Figure2-1} 
+
+}
+
+\caption{ Behaviour of Market-Related Rates\label{Figure2}}\label{fig:Figure2}
+\end{figure}
+
+Following the inflation rate peak in 2008 as shown in \ref{Figure2} and
+\ref{tab8}, long-term interest rates have consistently remained above
+inflation and short-term interest rates. This suggests investors demand
+higher returns for holding long-term investments, potentially reflecting
+concerns about the riskiness of investing in South Africa and doubts
+about the SARB's commitment to maintaining price stability.
+
+The short-term interest rate has reacted ambiguously over this period.
+This is not surprising because short-term interest rates typically track
+the central bank rate (repo rate). Unless there is a complete loss of
+credibility of the central bank, this rate will remain closely linked to
+the central bank rate, as shown in below.
+
+\begin{figure}[H]
+
+{\centering \includegraphics{DatSci-Project-_files/figure-latex/Figure3-1} 
+
+}
+
+\caption{Behvaiour of Short-Term Rates\label{Figure3}}\label{fig:Figure3}
+\end{figure}
+
+Figure \ref{Figure3} introduces the central bank rate to this paper,
+commonly known as the repo rate in South Africa, which is the rate at
+which the central bank lends to commercial banks. This is the primary
+tool used by the SARB to influence short-term interest rates and
+inflation. The repo rate is forward-looking, meaning that it is set
+based on the central bank's expectation of future inflation. For
+instance, should the SARB expect inflation to rise in the next year, it
+may raise the repo rate now, even if current inflation is still within
+the target. The figure shows that it is common practice for the central
+bank to set the repo rate above inflation to maintain price stability.
+However, during the 2021-2022 period, inflation exceeded the repo rate,
+see \ref{tab9}. This deviation from normality can be largely attributed
+to the COVID-19 pandemic, where economic activity had been limited since
+2020, and the SARB kept the repo rate relatively fixed over this period
+to help the economy recover.
+
+\section{\texorpdfstring{Statistical
+modelling\label{Statistical modelling}}{Statistical modelling}}\label{statistical-modelling}
+
+To add rigour to the findings in Section \ref{Data Description} and to
+capture the movements that may be lost in visual illustrations, this
+section explores key econometric techniques to reinforce and validate
+the findings.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rrrrr}
+  \hline
+ & Estimate & Std. Error & t value & Pr($>$$|$t$|$) \\ 
+  \hline
+(Intercept) & 3.8108 & 1.0249 & 3.72 & 0.0023 \\ 
+  infl\_lag1 & 0.2599 & 0.1754 & 1.48 & 0.1605 \\ 
+   \hline
+\end{tabular}
+\caption{Inflation Persistence in South Africa (2008-2024) \label{tab4}} 
+\end{table}
+
+An Autoregressive (AR(1)) inflation model was used to see if the
+inflation spike in 2008 had lasting effects on subsequent inflation. The
+estimated coefficient of 0.259 as seen in \ref{tab4} for the lag
+inflation term is statistically insignificant, illustrating there is no
+inflation persistence in South Africa and that the shock of 2008 was
+short-lived. Importantly, a lack of inflation persistence may reflect
+anchored inflation expectations and a trust that the SARB will respond
+swiftly to inflationary pressures, implying a degree of credibility in
+its commitment.
+
+Furthermore, other econometric techniques such as Vector Autoregressive
+Modelling (VAR) are powerful tools to analyse the dynamic relationships
+between multiple variables over time. In essence, a VAR estimates how a
+shock in one variable affects itself and other variables overtime ,
+observing this would add further robustness to findings by tracking how
+shocks in inflation, long-term, and short-term interest rates affect
+each other over time. The findings are shown in \ref{tab34} and
+\ref{tab7}.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrrr}
+  \hline
+ & Estimate & Std. Error & t value & Pr($>$$|$t$|$) \\ 
+  \hline
+infl.l1 & -0.05 & 0.23 & -0.21 & 0.84 \\ 
+  short\_rate.l1 & 0.34 & 0.41 & 0.81 & 0.43 \\ 
+  long\_rate.l1 & 0.52 & 0.52 & 0.99 & 0.34 \\ 
+  infl.l2 & 0.15 & 0.20 & 0.73 & 0.48 \\ 
+  short\_rate.l2 & -0.76 & 0.41 & -1.85 & 0.09 \\ 
+  long\_rate.l2 & 0.07 & 0.42 & 0.17 & 0.87 \\ 
+  const & -0.27 & 0.36 & -0.74 & 0.47 \\ 
+   \hline
+\end{tabular}
+\caption{VAR Equation for Short-Term Interest Rate \label{tab34}} 
+\end{table}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrrr}
+  \hline
+ & Estimate & Std. Error & t value & Pr($>$$|$t$|$) \\ 
+  \hline
+infl.l1 & -0.11 & 0.08 & -1.30 & 0.22 \\ 
+  short\_rate.l1 & 0.32 & 0.15 & 2.08 & 0.06 \\ 
+  long\_rate.l1 & 0.11 & 0.19 & 0.57 & 0.58 \\ 
+  infl.l2 & 0.08 & 0.08 & 1.04 & 0.31 \\ 
+  short\_rate.l2 & -0.28 & 0.15 & -1.84 & 0.09 \\ 
+  long\_rate.l2 & 0.64 & 0.16 & 4.08 & 0.00 \\ 
+  const & 0.13 & 0.14 & 0.93 & 0.37 \\ 
+   \hline
+\end{tabular}
+\caption{VAR Equation for Long-Term Interest Rate \label{tab7}} 
+\end{table}
+
+For the sake of academic integrity, it is important to openly state that
+the results in tables \ref{tab34} and \ref{tab7} should not be taken in
+isolation. Upon examining the data, there is evidence of
+non-stationarity in the short-term and long-term interest rates, which
+is a common challenge in macroeconomic time series. However, the
+inflation series is found to be stationary, which lends credibility to
+the findings reported in \ref{tab4}, particularly, when interpreted
+alongside the broader literature. Based on this, it is reasonable to
+infer that short-term and long-term interest rates exhibit the same
+behaviour, where shocks are relatively short-lived. This provides
+further evidence showing that inflation expectations are well-anchored,
+even though there have been periods where inflation exceeded the target
+band, economic agents perceive the SARB's inflation target as both a
+credible and consistent commitment. This illustrates that any outliers
+in interest rate behaviour stem from factors outside the direct control
+of the monetary policy authority.
+
+\section{Conclusion}\label{conclusion}
+
+This paper assesses the credibility of the SARB under the
+inflation-targeting regime to evaluate whether a transition to a lower
+inflation target is both justified and likely to be perceived as
+credible by economic agents. By analysing the behaviour of short-term
+and long-term interest rates, the findings show that even though the
+SARB has not always kept inflation within the target range, it has
+maintained the trust the markets and economic agents. Further, it is
+important to note that while there have been deviations in the behaviour
+of interest rates, the findings show that these fluctuations are a
+result of shocks exogenous to the SARB rather than policy inconsistency.
+
+Governor Lesetja Kganyago , has on multiple occasions made the remark
+that a highly inflationary economy is one that is `` anti-poor''. A
+lower inflation has the potential to increase productive investment , as
+a result of lost economic uncertainty. The spillover of this creates an
+environment that is conducive for economic growth and job creation. This
+paper provides valuable insight into how the interest rate dynamics
+reflect institutional credibility of the SARB ,the findings in this
+paper therefore support the argument that a transition to a 3\% point
+target is feasible and is also likely to yield desirable outcomes for
+the South African economy.
+
+\newpage
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{1}{1}
+\bibitem[\citeproctext]{ref-ellyne2011}
+Ellyne, M. \& Veller, C. 2011. What is the SARB's inflation targeting
+policy, and is it appropriate?
+
+\bibitem[\citeproctext]{ref-honohan2022}
+Honohan, P. \& Orphanides, A. 2022. \emph{Monetary policy in south
+africa, 2007-21}. (2022/29). WIDER Working Paper.
+
+\bibitem[\citeproctext]{ref-IMF2006}
+International Monetary Fund. 2006. \emph{Inflation targeting and the
+{IMF}}. International Monetary Fund.
+
+\bibitem[\citeproctext]{ref-kahn2008}
+Kahn, B. 2008. Challenges of inflation targeting for emerging-market
+economies: The south african case. \emph{Challenges for Monetary
+Policy-makers in Emerging Markets}.
+
+\bibitem[\citeproctext]{ref-loewald2025}
+Loewald, C., Steinbach, R. \& Rakgalakane, J. 2025. \emph{Less risk and
+more reward revising south africas inflation target}.
+
+\bibitem[\citeproctext]{ref-muller2025}
+Müller, K., Xu, C., Lehbib, M. \& Chen, Z. 2025. The global macro
+database: A new international macroeconomic dataset.
+
+\bibitem[\citeproctext]{ref-StatsSA2004}
+Statistics South Africa. 2004. \emph{Consumer price index (CPI):
+Headline, november 2004}. Statistics South Africa.
+
+\bibitem[\citeproctext]{ref-stiglitz2008}
+Stiglitz, J.E. 2008. The failure of inflation targeting. \emph{Project
+Syndicate}. 13.
+
+\bibitem[\citeproctext]{ref-van2004}
+Van der Merwe, E.J. 2004. \emph{Inflation targeting in south africa}.
+South African Reserve Bank.
+
+\end{CSLReferences}
+
+\newpage
+
+\section*{Appendix}\label{appendix}
+\addcontentsline{toc}{section}{Appendix}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+  \hline
+Variable & Description \\ 
+  \hline
+infl & Inflation rate (\%) \\ 
+  strate & Short-term interest rate (\%) \\ 
+  ltrate & Long-term interest rate (\%) \\ 
+  cbrate & Central bank rate (repo rate, \%) \\ 
+   \hline
+\end{tabular}
+\caption{Variable Descriptions\label{tab21}} 
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rr}
+  \hline
+Year & Inflation Rate (\%) \\ 
+  \hline
+2000 & 5.34 \\ 
+  2001 & 5.70 \\ 
+  2002 & 9.49 \\ 
+  2003 & 5.68 \\ 
+  2004 & -0.69 \\ 
+  2005 & 2.06 \\ 
+  2006 & 3.24 \\ 
+  2007 & 6.18 \\ 
+  2008 & 10.06 \\ 
+  2009 & 7.26 \\ 
+  2010 & 4.06 \\ 
+  2011 & 5.02 \\ 
+  2012 & 5.72 \\ 
+  2013 & 5.78 \\ 
+  2014 & 6.14 \\ 
+  2015 & 4.51 \\ 
+  2016 & 6.59 \\ 
+  2017 & 5.27 \\ 
+  2018 & 4.50 \\ 
+  2019 & 4.13 \\ 
+  2020 & 3.22 \\ 
+  2021 & 4.61 \\ 
+  2022 & 7.04 \\ 
+  2023 & 6.07 \\ 
+  2024 & 4.43 \\ 
+   \hline
+\end{tabular}
+\caption{Annual Inflation Rate in South Africa (2000–2024) \label{tab8}} 
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rrr}
+  \hline
+Year & Inflation Rate (\%) & Repo Rate (\%) \\ 
+  \hline
+2010 & 4.06 & 5.50 \\ 
+  2011 & 5.02 & 5.50 \\ 
+  2012 & 5.72 & 5.00 \\ 
+  2013 & 5.78 & 5.00 \\ 
+  2014 & 6.14 & 5.75 \\ 
+  2015 & 4.51 & 6.25 \\ 
+  2016 & 6.59 & 7.00 \\ 
+  2017 & 5.27 & 6.75 \\ 
+  2018 & 4.50 & 6.75 \\ 
+  2019 & 4.13 & 6.50 \\ 
+  2020 & 3.22 & 3.50 \\ 
+  2021 & 4.61 & 3.75 \\ 
+  2022 & 7.04 & 7.00 \\ 
+  2023 & 6.07 & 8.25 \\ 
+  2024 & 4.43 & 7.75 \\ 
+   \hline
+\end{tabular}
+\caption{Annual Inflation and Repo Rate in South Africa (2010–2024) \label{tab9}} 
+\end{table}
+
+\bibliography{Tex/ref}
+
+
+
+
+
+\end{document}
