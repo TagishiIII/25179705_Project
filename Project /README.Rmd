@@ -9,17 +9,19 @@ date: "2025-06-12"
 
 The purpose of this project is to evaluate the interest rate dynamics in South Africa since 2000. This is for 2025 Data Science for Economics and Finance 871 project. 
 
+
 # Data
 
 ```{r}
 
-library(tidyverse)
-library(lubridate)
 library(huxtable)
 library(dplyr)
 library(tidyr)
 library(xtable)
 library(here)
+library(forecast)
+library(vars)   
+library(tseries)
 
 # Importing Global Macro Dataset 
 Macro  <- read_csv(here("data", "GMD.csv"))
@@ -34,15 +36,6 @@ MzansiMAcro <- Macro %>% filter(countryname == "South Africa")
 
 
 ```{r}
-# Plotting a graph that showed the years where Inflation has been outside the SARB target range since 2000 
-library(tidyverse)
-library(lubridate)
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
-library(here)
-
 
 # Plotting a graph that showed the years where Inflation has been outside the SARB target range since 2000 
 MzansiMAcro %>% filter(year >=2000 & year<=2024) %>% mutate(outside_target = infl < 3 | infl > 6) %>% ggplot(aes(x = year, y = infl)) +
@@ -62,17 +55,6 @@ MzansiMAcro %>% filter(year >=2000 & year<=2024) %>% mutate(outside_target = inf
 
 ```{r}
 
-
-
-library(tidyverse)
-library(lubridate)
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
-library(readr)
-library(here)
-
  #Visualizing the inflation and interest rate trends since 2000
 
 sa_rates_long5 <- MzansiMAcro %>% filter(year >= 2000 & year <= 2024)%>% pivot_longer(cols = c(strate, ltrate, infl),names_to = "rate_type", values_to = "rate")
@@ -88,196 +70,287 @@ sa_rates_long5 <- MzansiMAcro %>% filter(year >= 2000 & year <= 2024)%>% pivot_l
 ```
 
 
-# Statistical modeling section 
+## Statistical Tests
 
-```{r}
- 
-
-library(tidyverse)
-library(lubridate)
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
-library(here)
-
-# Generating a table for inflation persistence from an AR(1) model 
-
-df <- MzansiMAcro %>%
-  filter(year >= 2008 & year <= 2024) %>%
-  arrange(year) %>%
-  mutate(infl_lag1 = lag(infl, 1))
-
-model <- lm(infl ~ infl_lag1, data = df)
-fyf<- summary(model)
-
-hibo<-xtable(fyf , caption = "Inflation Persistence in South Africa (2008-2024) \\label{tab4}" )
+### Inflation
 
 
-print.xtable(hibo, 
-             # tabular.environment = "longtable",
-             floating = TRUE,
-             table.placement = 'H',
-             # scalebox = 0.3,
-             comment = FALSE,
-             caption.placement = 'bottom'
-             )
+```{r Figure10, echo=FALSE, fig.align='center', fig.cap="Autocorrelation Function of Inflation \\label{Figure10}", fig.height=3, fig.width=6, warning=FALSE, dev='png'}
 
+# Use clean_df data for the statistical modelling section 
 
-```
-
-
-
-```{r}
-
-
-library(tidyverse)
-library(lubridate)
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
-library(vars)
-library(here)
-
-
-# Generating a table for short-term interest rate equation from the VAR model
-
+# Note the 2024 data is dropped here because there is a NA in the long-term interest rate 
 clean_df <- MzansiMAcro %>%
   filter(year >= 2000 & year <= 2024) %>%
-  dplyr ::select(infl, short_rate = strate, long_rate = ltrate) %>%
+  dplyr ::select(year , infl, short_rate = strate, long_rate = ltrate) %>%
   na.omit()
 
-ts_data <- ts(clean_df, start = 2000, frequency = 1)
 
-var_model <- VAR(ts_data, p = 2, type = "const")
+# For the inflation
+
+# converting the datq to a time series object 
+infl_ts <- ts(clean_df$infl, start = 2000, frequency = 1)
+short_ts <- ts(clean_df$short_rate, start = 2000, frequency = 1)
+long_ts <- ts(clean_df$long_rate, start = 2000, frequency = 1)
+
+ # A autocorrelation test 
+# ACF shows you how a lag period is directly or indirectly related to our current value
+acf(infl_ts, main = "ACF of Inflation Rate")
+# The ACF plot indicates that inflation shows significant autocorrelation for up to two lags, while the third and subsequent lags are statistically insignificant. This suggests that inflation possesses short-term memory, with its effects fading relatively quickly over time.
 
 
-short_rate_output <- summary(var_model$varresult$short_rate)$coefficients
-short_rate_table <- xtable(short_rate_output, 
-                           caption = "VAR Equation for Short-Term Interest Rate \\label{tab34}")
-print(short_rate_table, 
-      include.rownames = TRUE, 
-      caption.placement = "bottom",  comment = FALSE)
+
+
+
+```
+
+
+```{r Figure11, echo=FALSE, fig.align='center', fig.cap="Partial Autocorrelation Function of Inflation\\label{Figure11}", fig.height=3, fig.width=6, warning=FALSE, dev='png'}
+
+
+# A partial autocorrelation test 
+# PACF shows you how a lag period is directly related to our current value , this is done by controlling for the immediate lags 
+
+pacf(infl_ts, main = "PACF of Inflation Rate")
+
+
+
+
+```
+
+```{r include=FALSE}
+
+# ACF and PACF tests show some non-stationarity but ADF test shows stationarity 
+
+adf.test(infl_ts)
+
+```
+
+```{r include=FALSE}
+## Comparing ARIMA models to select the most appropriate for modelling inflation , given that ADF indicates no stationarity , and no clear cutoff after lag 1 that would indicate a Moving Average Structure 
+
+library(forecast)
+# Fit AR(1)
+model_ar1 <- Arima(infl_ts, order = c(1,0,0))  
+model_ar1
+# Fit AR(2)
+model_ar2 <- Arima(infl_ts, order = c(2,0,0))
+model_ar2
+
+
+
+
+```
+
+
+### Short-Term Interest 
+
+```{r Figure12, echo=FALSE, fig.align='center', fig.cap="Autocorrelation Function of Short-Term Interest Rate\\label{Figure12}", fig.height=3, fig.width=6, warning=FALSE, dev='png'}
+
+# ACF For the short_rate 
+
+acf(short_ts, main = "ACF of Short-Term Interest Rate")
+
+```
+
+```{r Figure13, echo=FALSE, fig.align='center', fig.cap=" Partial Autocorrelation Function of Short-Term Interest Rate\\label{Figure13}", fig.height=3, fig.width=6, warning=FALSE, dev='png'}
+
+#PACF for short_rate 
+pacf(short_ts, main = "PACF of Short-Term Interest Rate")
+```
+
+
+
+```{r include=FALSE}
+#Augmented Dickey Fuller test , this is the formal test for stationarity 
+adf.test(short_ts)
+```
+
+
+
+```{r include=FALSE}
+# Taking the first difference, then check if the first difference is stationary 
+diff_short <- diff(short_ts)
+
+adf.test(diff_short)
+
+```
+
+
+
+
+### Long-Term Interest 
+
+```{r Figure14, echo=FALSE, fig.align='center', fig.cap="Autocorrelation Function of Long-Term Interest Rate\\label{Figure14}", fig.height=3, fig.width=6, warning=FALSE, dev='png'}
+
+# ACF For the long_rate 
+acf(long_ts, main = "ACF of Long-Term Interest Rate")
+
+
+
+```
+
+
+```{r Figure15, echo=FALSE, fig.align='center', fig.cap="Partial Autocorrelation Function of Long-Term Interest Rate\\label{Figure15}", fig.height=3, fig.width=6, warning=FALSE, dev='png'}
+
+# PACF for long_rate
+
+pacf(long_ts, main = "PACF of Long-Term Interest Rate")
+
+```
+
+
+```{r include=FALSE}
+# ADF test for long
+adf.test(long_ts)
+
+```
+
+```{r include=FALSE}
+
+# Take the first difference
+diff_long <- diff(long_ts)
+# Test for stationarity 
+adf.test(diff_long)
+
+# Take the second difference , first difference is non-stationary 
+diff2_long <- diff(diff_long)
+# Test for stationarity 
+adf.test(diff2_long)
+
+
+# Take the third difference , second difference is non-stationary 
+diff3_long <- diff(diff2_long)
+# Test for stationarity 
+adf.test(diff3_long)
 
 
 ```
 
 
 
-```{r}
+## Modelling 
 
-library(tseries)
-library(tidyverse)
-library(lubridate)
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
-library(vars)
-library(urca)
-library(here)
-
-Macro  <- read_csv(here("data", "GMD.csv"))
-MzansiMAcro <- Macro %>% filter(countryname == "South Africa")
+The Autoregressive Model of order 2 for inflation is : 
+\begin{equation}
+\pi_t = c + \phi_1 \pi_{t-1} + \phi_2 \pi_{t-2} + \varepsilon_t
+\end{equation}
 
 
-# Conducting a Augmented Dickey Fuller test for stationarity 
-# Hanjo wanted me to show ADF and PACF tests
+```{r include=FALSE}
 
-adf.test(ts_data[, "infl"])        
-adf.test(ts_data[, "short_rate"])  
-adf.test(ts_data[, "long_rate"])
+# Manually constructing the output based on the results of the ARIMA 
+coefs_df <- data.frame(
+  Term = c("ar1", "ar2", "intercept"),
+  Estimate = c(0.5240, -0.4711, 5.2471),
+  Std_Error = c(0.1744, 0.1694, 0.3815)
+)
 
-
-# Testing for cointegration of my non-stationary variables 
-cajo_test <- ca.jo(ts_data, 
-                   type = "trace",     
-                   ecdet = "const",    
-                   K = 2)              
-
-summary(cajo_test)
+# Create the xtable
+model_table <- xtable(coefs_df, 
+                      caption = "AR(2) Model Coefficients for Inflation \\label{tab66}")
 
 
-clean_df <- MzansiMAcro %>%
-  filter(year >= 2000 & year <= 2024) %>%
-  dplyr ::select(infl, short_rate = strate, long_rate = ltrate) %>%
-  na.omit()
-
-ts_data <- ts(clean_df, start = 2000, frequency = 1)
-
-
-# Taking the first difference of my data since there is evidence of non-stationarity and no cointegration 
-
-diff_data <- diff(ts_data)  
-library(vars)
-var_model_diff <- VAR(diff_data, p = 2, type = "const")
-summary(var_model_diff)
 
 
 ```
 
 
-```{r}
+```{r Liu, results = 'asis'}
 
-
-library(tidyverse)
-library(lubridate)
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
-library(vars)
-library(here)
-
-
-# Generating a table for long-term interest rate equation from the VAR model
-long_rate_output <- summary(var_model_diff$varresult$long_rate)$coefficients
-
-long_rate_table <- xtable(long_rate_output, 
-                          caption = "VAR Equation for Long-Term Interest Rate \\label{tab7}")
-print(long_rate_table, 
-      include.rownames = TRUE,
+# Print AR(2) output
+print(model_table,
+      floating = TRUE,
+      include.rownames = FALSE,
+      table.placement = "H",
       caption.placement = "bottom",
-      comment= FALSE) 
-
+      comment = FALSE)
 ```
 
 
-```{r}
+
+\bigskip 
+
+The following Vector Autoregressive Model (VAR(6)) was used to examine the dynamic relationship between inflation and the short-term interest rate:
 
 
-library(tidyverse)
-library(lubridate)
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
-library(vars)
-library(here)
+\begin{equation}
+\begin{bmatrix}
+\pi_t \\
+r_t
+\end{bmatrix}
+=
+\mathbf{c}
++
+\sum_{i=1}^{6}
+\Phi_i
+\begin{bmatrix}
+\pi_{t-i} \\
+r_{t-i}
+\end{bmatrix}
++
+\begin{bmatrix}
+\varepsilon_{\pi,t} \\
+\varepsilon_{r,t}
+\end{bmatrix}
+\end{equation}
 
-# Generating an Impulse response functions , will be used if necessary , this shows the movement of the variables following a shock 
-
-clean_df <- MzansiMAcro %>%
-  filter(year >= 2000 & year <= 2024) %>%
-  dplyr ::select(inflation_rate = infl, short_rate = strate, long_rate = ltrate) %>%
-  na.omit()
-
-ts_data <- ts(clean_df, start = 2000, frequency = 1)
-
-var_model <- VAR(ts_data, p = 2, type = "const")
 
 
-irf_result <- irf(var_model,
-                  impulse = "inflation_rate",                      
-                  response = c("short_rate", "long_rate"),
-                  n.ahead = 10,
-                  boot = TRUE)
-plot(irf_result)
+```{r include=FALSE}
+
+library(vars)        
+
+
+# remove the first inflation observation so that the VAR model has the same number of rows 
+# combine the inflation and short-term interest into one matrix
+var_data <- cbind(inflation = clean_df$infl[-1], short_rate = diff(clean_df$short_rate))
+
+# Check lag length
+VARselect(var_data, lag.max = 10, type = "const")
+
+# Estimate VAR model with chosen lag , VARselect informs that the optimal is 6 lags 
+var_model <- VAR(var_data, p = 6, type = "const")
+summary(var_model)
+
+
+# Manually construct the coefficient table 
+var_coef_table <- data.frame(
+  Term = c("inflation.l1", "short_rate.l1", "inflation.l2", "short_rate.l2",
+           "inflation.l3", "short_rate.l3", "inflation.l4", "short_rate.l4",
+           "inflation.l5", "short_rate.l5", "inflation.l6", "short_rate.l6", "const"),
+  Estimate = c(-0.02951, 0.47257, 0.03001, -0.45616, 
+               0.24376, -0.67412, -0.72850, 0.42824,
+               0.70444, -0.32386, -0.22653, -0.34392, -0.31766),
+  Std_Error = c(0.51052, 0.47297, 0.50395, 0.42000,
+                0.32861, 0.45561, 0.33486, 0.62009,
+                0.42630, 0.62727, 0.42468, 0.39421, 5.02632),
+  p_value = c(0.9548, 0.3211, 0.9538, 0.2895,
+              0.4602, 0.1725, 0.0952, 0.5030,
+              0.1377, 0.6107, 0.6022, 0.3893, 0.9513)
+)
+
+# Create and print the LaTeX table
+VAR_out <- xtable(var_coef_table, 
+                     caption = "VAR(6) Model Coefficient for the Short-Term Interest Rate \\label{tab67}")
 
 
 
 ```
+
+```{r Mee , results = 'asis'}
+
+
+# Print VAR xtable 
+print(VAR_out, 
+      floating = TRUE,
+      include.rownames = FALSE, 
+      table.placement = "H", 
+       caption.placement = "bottom",
+     comment = FALSE)
+
+```
+
 
 
 # Appendix 
@@ -382,3 +455,41 @@ print.xtable(haibo,
 ```
 
 
+# Methodology \label{Meth}
+
+## Subsection
+
+Ideally do not overuse subsections. It equates to bad writing.[^1]
+
+[^1]: This is an example of a footnote by the way. Something that should also not be overused.
+
+## Math section
+
+Equations should be written as such:
+
+\begin{align}
+\beta = \sum_{i = 1}^{\infty}\frac{\alpha^2}{\sigma_{t-1}^2} \label{eq1} \\
+\int_{x = 1}^{\infty}x_{i} = 1 \notag
+\end{align}
+
+If you would like to see the equations as you type in Rmarkdown, use \$ symbols instead (see this for yourself by adjusted the equation):
+
+$$
+\beta = \sum_{i = 1}^{\infty}\frac{\alpha^2}{\sigma_{t-1}^2} \\
+\int_{x = 1}^{\infty}x_{i} = 1
+$$
+
+Note the equation above - this should appear in math in Rstudio. Writing nice math requires practice. Note I used a forward slashes to make a space in the equations. I can also align equations using **&**, and set to numbering only the first line. Now I will have to type \`\`begin equation'' which is a native \LaTeX command. Here follows a more complicated equation that you want aligned (using & sign) and numbered:
+
+\begin{align}
+    y_t &= c + B(L) y_{t-1} + e_t   \label{eq2}    \\ \notag
+    e_t &= H_t^{1/2}  z_t ; \quad z_t \sim  N(0,I_N) \quad \& \quad H_t = D_tR_tD_t \\ \notag
+        D_t^2 &= {\sigma_{1,t}, \dots, \sigma_{N,t}}   \\ \notag
+        \sigma_{i,t}^2 &= \gamma_i+\kappa_{i,t}  v_{i, t-1}^2 +\eta_i  \sigma_{i, t-1}^2, \quad \forall i \\ \notag
+        R_{t, i, j} &= {diag(Q_{t, i, j}}^{-1}) . Q_{t, i, j} . diag(Q_{t, i, j}^{-1})  \\ \notag
+        Q_{t, i, j} &= (1-\alpha-\beta)  \bar{Q} + \alpha  z_t  z_t'  + \beta  Q_{t, i, j} \notag
+\end{align}
+
+Note that in \ref{eq2} I have aligned the equations by the equal signs. I also want only one tag, and I create spaces using \`\`quads''.
+
+See if you can figure out how to do complex math using the two examples provided in \ref{eq1} and \ref{eq2}.

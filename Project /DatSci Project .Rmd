@@ -154,6 +154,10 @@ library(dplyr)
 library(tidyr)
 library(xtable)
 library(here)
+library(forecast)
+library(vars)   
+library(tseries)
+
  
 Macro  <- read_csv(here("data", "GMD.csv"))
 MzansiMAcro <- Macro %>% filter(countryname == "South Africa")
@@ -188,11 +192,6 @@ The fact that the inflation rate reached 10.6% in 2008 raised significant concer
 
 
 ```{r Figure2, warning =  FALSE, fig.align = 'center',fig.cap = " Behaviour of Market-Related Rates\\label{Figure2}", fig.height = 3, fig.width = 6, dev = 'png'}
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
-library(here)
 
 Macro  <- read_csv(here("data", "GMD.csv"))
 MzansiMAcro <- Macro %>% filter(countryname == "South Africa") 
@@ -215,13 +214,6 @@ The short-term interest rate has reacted ambiguously over this period. This is n
 
 
 ```{r Figure3, warning =  FALSE, fig.align = 'center', fig.cap = "Behvaiour of Short-Term Rates\\label{Figure3}", fig.height = 3, fig.width = 6, dev = 'png'}
-
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
-library(here)
-
 
 Macro  <- read_csv(here("data", "GMD.csv"))
 MzansiMAcro <- Macro %>% filter(countryname == "South Africa") 
@@ -248,168 +240,310 @@ Figure \ref{Figure3} introduces the central bank rate to this paper, commonly kn
 To add rigour to the findings in Section \ref{Data Description} and to capture the movements that may be lost in visual illustrations, this section explores key econometric techniques to reinforce and validate the findings.  
 
 
-```{r tucker, results = 'asis'}
-
-library(here)
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
+As a precursor to the statistical modelling in this section, the Autocorrelation function (ACF), Partial Autocorrelation function (PACF), and Augmented Dickey Fuller (ADF) tests are conducted to test for the stationarity of the variables. These diagnostic tests inform the selection of the appropriate models for the variables of interest. 
 
 
-df <- MzansiMAcro %>%
-  filter(year >= 2008 & year <= 2024) %>%
-  arrange(year) %>%
-  mutate(infl_lag1 = lag(infl, 1))
 
-model <- lm(infl ~ infl_lag1, data = df)
-fyf<- summary(model)
+## Statistical Tests
 
-hibo<-xtable(fyf , caption = "Inflation Persistence in South Africa (2008-2024) \\label{tab4}" )
+### Inflation
 
 
-print.xtable(hibo, 
-            
-             floating = TRUE,
-             table.placement = 'H',
-             
-             comment = FALSE,
-             caption.placement = 'bottom'
-             )
+```{r Figure10, echo=FALSE, fig.align='center', fig.cap="Autocorrelation Function of Inflation \\label{Figure10}", fig.height=3, fig.width=6, warning=FALSE, dev='png'}
+# Use clean_df data for the statistical modelling section 
+
+# Note the 2024 data is dropped here because there is a NA in the long-term interest rate 
+clean_df <- MzansiMAcro %>%
+  filter(year >= 2000 & year <= 2024) %>%
+  dplyr ::select(year , infl, short_rate = strate, long_rate = ltrate) %>%
+  na.omit()
+
+
+# For the inflation
+
+# converting the datq to a time series object 
+infl_ts <- ts(clean_df$infl, start = 2000, frequency = 1)
+short_ts <- ts(clean_df$short_rate, start = 2000, frequency = 1)
+long_ts <- ts(clean_df$long_rate, start = 2000, frequency = 1)
+
+ # A autocorrelation test 
+# ACF shows you how a lag period is directly or indirectly related to our current value
+acf(infl_ts, main = "ACF of Inflation Rate")
+# The ACF plot indicates that inflation exhibits significant autocorrelation for up to two lags, while the third and subsequent lags are statistically insignificant. This suggests that inflation possesses short-term memory, with its effects fading relatively quickly over time.
+
+
+```
+
+
+```{r Figure11, echo=FALSE, fig.align='center', fig.cap="Partial Autocorrelation Function of Inflation\\label{Figure11}", fig.height=3, fig.width=6, warning=FALSE, dev='png'}
+
+
+# A partial autocorrelation test 
+# PACF shows you how a lag period is directly related to our current value , this is done by controlling for the immediate lags 
+
+pacf(infl_ts, main = "PACF of Inflation Rate")
+
+
+
+
+```
+
+```{r include=FALSE}
+
+# ACF and PACF tests show some non-stationarity but ADF test shows stationarity 
+
+adf.test(infl_ts)
+
+```
+
+```{r include=FALSE}
+## Comparing ARIMA models to select the most appropriate for modelling inflation , given that ADF indicates no stationarity , and no clear cutoff after lag 1 that would indicate a Moving Average Structure 
+
+# Fit AR(1)
+model_ar1 <- Arima(infl_ts, order = c(1,0,0))  
+model_ar1
+# Fit AR(2)
+model_ar2 <- Arima(infl_ts, order = c(2,0,0))
+model_ar2
+
+
+```
+
+
+Figure \ref{Figure10} suggests a degree of inflation persistence, with significant autocorrelation at the first and second lags. Whereas, figure \ref{Figure11} suggests that there is a significant PACF at lag 1, this indicates that the first lagged period has a direct effect on current inflation which usually means that a AR(1) model would be sufficient, however based on the graph we cannot conclusively rule out the possibility of a statistically significant second lag. 
+
+However, results for the ADF test rejects the null hypothesis of a unit root, indicating that inflation is stationary. Based on this, ARIMA(1,0,0) and ARIMA(2,0,0) models were estimated and  compared. ARIMA(2,0,0) model yielded the lowest values for both the Akaike Information Criterion (AIC) and the Bayesian Information Criterion (BIC), indicating that an AR(2) model is the most suitable for modeling inflation.
+
+
+
+### Short-Term Interest 
+
+```{r Figure12, echo=FALSE, fig.align='center', fig.cap="Autocorrelation Function of Short-Term Interest Rate\\label{Figure12}", fig.height=3, fig.width=6, warning=FALSE, dev='png'}
+
+# ACF For the short_rate 
+
+acf(short_ts, main = "ACF of Short-Term Interest Rate")
+
+```
+
+```{r Figure13, echo=FALSE, fig.align='center', fig.cap=" Partial Autocorrelation Function of Short-Term Interest Rate\\label{Figure13}", fig.height=3, fig.width=6, warning=FALSE, dev='png'}
+
+#PACF for short_rate 
+
+pacf(short_ts, main = "PACF of Short-Term Interest Rate")
+```
+
+
+
+```{r include=FALSE}
+adf.test(short_ts)
+```
+
+
+
+```{r include=FALSE}
+diff_short <- diff(short_ts)
+
+adf.test(diff_short)
+
+```
+
+
+Figure \ref{Figure12} suggests a degree of short-term interest persistence, with significant autocorrelation at the first, second and third lags. Whereas, figure \ref{Figure13} suggests that there is a significant PACF at lag 1, with an inconclusive second lag. 
+
+The results for the ADF test fails to reject the null hypothesis for a unit root, indicating that short-term interest is non-stationary. After taking the first difference this variable becomes stationary, indicating that is I(1) and thus suitable for a VAR model.  
+
+
+
+### Long-Term Interest 
+
+```{r Figure14, echo=FALSE, fig.align='center', fig.cap="Autocorrelation Function of Long-Term Interest Rate\\label{Figure14}", fig.height=3, fig.width=6, warning=FALSE, dev='png'}
+
+# ACF For the long_rate 
+acf(long_ts, main = "ACF of Long-Term Interest Rate")
+
+
+```
+
+
+```{r Figure15, echo=FALSE, fig.align='center', fig.cap="Partial Autocorrelation Function of Long-Term Interest Rate\\label{Figure15}", fig.height=3, fig.width=6, warning=FALSE, dev='png'}
+
+# PACF for long_rate
+
+pacf(long_ts, main = "PACF of Long-Term Interest Rate")
+
+```
+
+
+```{r include=FALSE}
+# ADF test for long
+adf.test(long_ts)
+
+```
+
+```{r include=FALSE}
+# Take the first difference
+diff_long <- diff(long_ts)
+# Test for stationarity 
+adf.test(diff_long)
+
+# Take the second difference , first difference is non-stationary 
+diff2_long <- diff(diff_long)
+# Test for stationarity 
+adf.test(diff2_long)
+
+
+# Take the third difference , second difference is non-stationary 
+diff3_long <- diff(diff2_long)
+# Test for stationarity 
+adf.test(diff3_long)
+
+
+```
+
+
+Figure \ref{Figure14} suggests a degree of short-term interest persistence, with significant autocorrelation at the first, second, third and fourth lags. Whereas, figure \ref{Figure15} suggests that there is a significant PACF at the first and second lags, with an inconclusive third lag. 
+
+The results for the ADF test fails to reject the null hypothesis for a unit root, indicating that long-term interest is non-stationary. The long-term interest only became stationary after applying third differencing, indicating it is I(3) and unsuitable for a VAR model. 
+
+\bigskip
+
+## Modelling 
+
+The Autoregressive Model of order 2 for inflation is : 
+\begin{equation}
+\pi_t = c + \phi_1 \pi_{t-1} + \phi_2 \pi_{t-2} + \varepsilon_t
+\end{equation}
+
+
+```{r include=FALSE}
+
+# Manually constructing the output based on the results of the ARIMA 
+coefs_df <- data.frame(
+  Term = c("ar1", "ar2", "intercept"),
+  Estimate = c(0.5240, -0.4711, 5.2471),
+  Std_Error = c(0.1744, 0.1694, 0.3815)
+)
+
+
+# Create the xtable
+model_table <- xtable(coefs_df, 
+                      caption = "AR(2) Model Coefficients for Inflation \\label{tab66}")
+
 
 
 
 ```
 
 
-An Autoregressive (AR(1)) inflation model was used to see if the inflation spike in 2008  had lasting effects on subsequent inflation. The estimated coefficient of 0.259 as seen in \ref{tab4} for the lag inflation term is statistically insignificant, illustrating there is no inflation persistence in South Africa and that the shock of 2008 was short-lived. Importantly, a lack of inflation persistence may reflect anchored inflation expectations and a trust that the SARB will respond swiftly to inflationary pressures, implying a degree of credibility in its commitment.
+```{r Liu, results = 'asis'}
 
-Furthermore, other econometric techniques such as Vector Autoregressive Modelling (VAR) are powerful tools to analyse the dynamic relationships between multiple variables over time. 
-In essence, a VAR estimates how a shock in one variable affects itself and other variables overtime , observing this would add further robustness to findings by tracking how shocks in inflation, long-term, and short-term interest rates affect each other over time. The findings are shown in \ref{tab34} and \ref{tab7}. 
-
-```{r , include=FALSE}
-
-library(tseries)
-library(tidyverse)
-library(lubridate)
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
-library(vars)
-library(urca)
-library(here)
-
-
-clean_df <- MzansiMAcro %>%
-  filter(year >= 2000 & year <= 2024) %>%
-  dplyr ::select(infl, short_rate = strate, long_rate = ltrate) %>%
-  na.omit()
-
-ts_data <- ts(clean_df, start = 2000, frequency = 1)
-
-adf.test(ts_data[, "infl"])        
-adf.test(ts_data[, "short_rate"])  
-adf.test(ts_data[, "long_rate"])   
-
-
-cajo_test <- ca.jo(ts_data, 
-                   type = "trace",     
-                   ecdet = "const",    
-                   K = 2)              
-
-summary(cajo_test)
-
-
-diff_data <- diff(ts_data)  
-library(vars)
-var_model_diff <- VAR(diff_data, p = 2, type = "const")
-summary(var_model_diff)
-
-
-
-```
-
-
-```{r ker, results = 'asis'}
-
-library(tidyverse)
-library(lubridate)
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
-library(vars)
-library(here)
-
-
-clean_df <- MzansiMAcro %>%
-  filter(year >= 2000 & year <= 2024) %>%
-  dplyr ::select(infl, short_rate = strate, long_rate = ltrate) %>%
-  na.omit()
-
-ts_data <- ts(clean_df, start = 2000, frequency = 1)
-
-var_model <- VAR(ts_data, p = 2, type = "const")
-
-short_rate_output <- summary(var_model_diff$varresult$short_rate)$coefficients
-short_rate_table <- xtable(short_rate_output, 
-                           caption = "VAR Equation for Short-Term Interest Rate \\label{tab34}")
-print(short_rate_table, 
-      include.rownames = TRUE, 
-      caption.placement = "bottom",  comment = FALSE)
-
-```
-
-
-
-```{r fan , results = 'asis'}
-
-library(tidyverse)
-library(lubridate)
-library(huxtable)
-library(dplyr)
-library(tidyr)
-library(xtable)
-library(vars)
-library(here)
-
-
-clean_df <- MzansiMAcro %>%
-  filter(year >= 2000 & year <= 2024) %>%
-  dplyr ::select(infl, short_rate = strate, long_rate = ltrate) %>%
-  na.omit()
-
-ts_data <- ts(clean_df, start = 2000, frequency = 1)
-
-
-
-var_model <- VAR(ts_data, p = 2, type = "const")
-
-
-
-long_rate_output <- summary(var_model_diff$varresult$long_rate)$coefficients
-long_rate_table <- xtable(long_rate_output, 
-                          caption = "VAR Equation for Long-Term Interest Rate \\label{tab7}")
-print(long_rate_table, 
-      include.rownames = TRUE,
+# Print AR(2) output
+print(model_table,
+      floating = TRUE,
+      include.rownames = FALSE,
+      table.placement = "H",
       caption.placement = "bottom",
-      comment= FALSE) 
+      comment = FALSE)
+```
+
+
+Table \ref{tab66} shows that a 1 unit increase in inflation in the first lag increases current inflation by 0.524 units and that 1 unit increase in inflation in the second lag decreases current inflation by 0.47 units. This suggests that inflation has short-term persistence but ultimately reverts toward its long-run mean, which is about 5.25%. 
+
+\bigskip 
+
+The following Vector Autoregressive Model (VAR(6)) was used to examine the dynamic relationship between inflation and the short-term interest rate:
+
+
+\begin{equation}
+\begin{bmatrix}
+\pi_t \\
+r_t
+\end{bmatrix}
+=
+\mathbf{c}
++
+\sum_{i=1}^{6}
+\Phi_i
+\begin{bmatrix}
+\pi_{t-i} \\
+r_{t-i}
+\end{bmatrix}
++
+\begin{bmatrix}
+\varepsilon_{\pi,t} \\
+\varepsilon_{r,t}
+\end{bmatrix}
+\end{equation}
+
+
+
+```{r include=FALSE}
+
+
+# remove the first inflation observation so that the VAR model has the same number of rows 
+# combine the inflation and short-term interest into one matrix
+var_data <- cbind(inflation = clean_df$infl[-1], short_rate = diff(clean_df$short_rate))
+
+# Check lag length
+VARselect(var_data, lag.max = 10, type = "const")
+
+# Estimate VAR model with chosen lag , VARselect informs that the optimal is 6 lags 
+var_model <- VAR(var_data, p = 6, type = "const")
+summary(var_model)
+
+
+# Manually construct the coefficient table 
+var_coef_table <- data.frame(
+  Term = c("inflation.l1", "short_rate.l1", "inflation.l2", "short_rate.l2",
+           "inflation.l3", "short_rate.l3", "inflation.l4", "short_rate.l4",
+           "inflation.l5", "short_rate.l5", "inflation.l6", "short_rate.l6", "const"),
+  Estimate = c(-0.02951, 0.47257, 0.03001, -0.45616, 
+               0.24376, -0.67412, -0.72850, 0.42824,
+               0.70444, -0.32386, -0.22653, -0.34392, -0.31766),
+  Std_Error = c(0.51052, 0.47297, 0.50395, 0.42000,
+                0.32861, 0.45561, 0.33486, 0.62009,
+                0.42630, 0.62727, 0.42468, 0.39421, 5.02632),
+  p_value = c(0.9548, 0.3211, 0.9538, 0.2895,
+              0.4602, 0.1725, 0.0952, 0.5030,
+              0.1377, 0.6107, 0.6022, 0.3893, 0.9513)
+)
+
+# Create and print the LaTeX table
+VAR_out <- xtable(var_coef_table, 
+                     caption = "VAR(6) Model Coefficient for the Short-Term Interest Rate \\label{tab67}")
+
 
 
 ```
 
+```{r Mee , results = 'asis'}
 
-For the sake of academic integrity, it is important to openly state that the results in tables \ref{tab34} and \ref{tab7} should not be taken in isolation. Upon examining the data, there is evidence of non-stationarity in the short-term and long-term interest rates, which is a common challenge in macroeconomic time series. However, the inflation series is found to be stationary, which lends credibility to the findings reported in \ref{tab4}, particularly, when interpreted alongside the broader literature. Based on this, it is reasonable to infer that short-term and long-term interest rates exhibit the same behaviour, where shocks are relatively short-lived. This provides further evidence showing that inflation expectations are well-anchored, even though there have been periods where inflation exceeded the target band, economic agents perceive the SARB’s inflation target as both a credible and consistent commitment. This illustrates that any outliers in interest rate behaviour stem from factors outside the direct control of the monetary policy authority. 
-  
- 
+
+# Print VAR xtable 
+print(VAR_out, 
+      floating = TRUE,
+      include.rownames = FALSE, 
+      table.placement = "H", 
+       caption.placement = "bottom",
+     comment = FALSE)
+
+```
+
+The results shown in table \ref{tab67} indicate that none of the coefficients are statistically significant at the 5% level. However, inflation at lag 4 shows marginal significance at the 10% level. Overall, these results suggest no evidence of statistically significant interdependence between inflation and the short-term interest rate within a six-period lag structure. 
+
+
+
 
 # Conclusion
 
 
-This paper assesses the credibility of the SARB under the inflation-targeting regime to evaluate whether a transition to a lower inflation target is both justified and likely to be perceived as credible by economic agents. By analysing the behaviour of short-term and long-term interest rates, the findings show that even though the SARB has not always kept inflation within the target range, it has maintained the trust the markets and economic agents. Further, it is important to note that while there have been deviations in the behaviour of interest rates, the findings show that these fluctuations are a result of shocks exogenous to the SARB rather than policy inconsistency.
 
-Governor Lesetja Kganyago , has on multiple occasions  made the remark that a highly inflationary economy is one that is “ anti-poor”. A lower inflation has the potential to increase productive investment , as a result of lost economic uncertainty. The spillover of this  creates an environment that is conducive for economic growth and job creation. This paper provides valuable insight into how the interest rate dynamics reflect institutional credibility of the SARB ,the findings in this paper therefore support the argument that a transition to a 3% point target is feasible and is also likely to yield desirable outcomes for the South African economy. 
+This paper assesses the credibility of the SARB under the inflation-targeting regime to evaluate whether a transition to a lower inflation target is both justified and likely to be perceived as credible by economic agents. By analysing the behaviour of short-term and long-term interest rates, the findings show that even though the SARB has not always kept inflation within the target range, the empirical models show that the SARB solves inflation with a bit of a lag. Thus, it has maintained the trust the markets and economic agents. Further, it is important to note that while there have been deviations in the behaviour of interest rates, the findings show that these fluctuations are a result of shocks exogenous to the SARB rather than policy inconsistency. This implies that instances where the inflation target was barely missed may reflect lagged adjustments and external shocks rather than a loss of credibility.
+
+\newpage
+
+Governor Lesetja Kganyago, has on multiple occasions made the remark that a highly inflationary economy is one that is “ anti-poor”. A lower inflation has the potential to increase productive investment, as a result of lost economic uncertainty. The spillover of this creates an environment that is conducive for economic growth and job creation. This paper provides valuable insight into how the interest rate dynamics reflect institutional credibility of the SARB, the findings in this paper therefore support the argument that a transition to a 3% point target is feasible and may yield desirable outcomes for the South African economy. 
 
 
 
